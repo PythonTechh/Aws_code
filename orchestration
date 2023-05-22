@@ -1,0 +1,144 @@
+{
+  "id": "a",
+  "account": "b",
+  "source": "orxe",
+  "object": "orders",
+  "resources": "c",
+  "detail-type": "d"
+}
+
+{
+  "source":["orxe","maui"],
+  "object":["orders","transactions"]
+}
+
+import json
+import boto3
+from datetime import datetime
+
+def lambda_handler(event, context):
+    # TODO implement
+    print(event)
+    client= boto3.client('events')
+    
+    response = client.put_events(
+    Entries=[{
+            'Time': datetime(2015, 1, 1),
+            'Source': 'orxe',
+            'Resources': [],
+            'DetailType': "test_send_events",
+            'Detail': json.dumps(event),,
+            'EventBusName': "arn:aws:events:us-east-1:427318149626:event-bus/default"
+        },
+    ]
+)
+    return response
+    # {
+    #     'statusCode': 200,
+    #     'body': json.dumps('Hello from Lambda!')
+    # }
+
+
+{
+  "version": "0",
+  "id": "6a7e8feb-b491-4cf7-a9f1-bf3703467718",
+  "detail-type": "EC2 Instance State-change Notification",
+  "source": "orxe",
+  "account": "111122223333",
+  "time": "2017-12-22T18:43:48Z",
+  "region": "us-west-1",
+  "resources": [
+    "arn:aws:ec2:us-west-1:123456789012:instance/i-1234567890abcdef0"
+  ],
+  "detail": {
+    "instance-id": "i-1234567890abcdef0",
+    "state": "terminated"
+  }
+}
+
+
+
+{
+  "id": "6a7e8feb-b491-4cf7-a9f1-bf3703467718",
+  "detail-type": "EC2 Instance State-change Notification",
+  "source": "orxe",
+  "account": "111122223333",
+  "time": "2017-12-22T18:43:48Z",
+  "region": "us-west-1",
+  "resources": []
+}
+
+
+{
+  "id": "",
+  "detail-type": "abc",
+  "account": "travel-data",
+  "time": "2017-12-22T18:43:48Z",
+  "region": "us-east-1",
+  "object":"orders",
+  "source": "orxe"
+}
+
+{
+    "source": ["orxe", "aws.fargate"],
+    "object":["orders","transactions"]
+  
+}
+
+
+
+
+import json
+import boto3
+
+print('Loading function')
+
+
+def lambda_handler(event, context):
+    client = boto3.client('events')
+    response = client.put_rule(
+    Name='testbylambda1',
+    ScheduleExpression='rate(5 minutes)',
+    #EventPattern='string',
+    State='ENABLED',
+    Description='testbylambda',
+    RoleArn='arn:aws:iam::740486177493:role/event_role',
+    Tags=[
+        {
+            'Key': 'JobType',
+            'Value': 'P'
+        },
+    ],
+    EventBusName='default'
+)
+    print("After event", response)
+
+    response = client.put_targets(
+    Rule='testbylambda1',
+    Targets=[
+        {
+            'Id': '1',
+            'Arn':'arn:aws:states:us-east-1:740486177493:stateMachine:travel_sf',
+            'RoleArn': 'arn:aws:iam::740486177493:role/event_role'
+        }
+    ]
+)
+
+    print("Received event: " + json.dumps(event, indent=2))
+    print("value1 = " + event['key1'])
+    print("value2 = " + event['key2'])
+    print("value3 = " + event['key3'])
+    return event['key1']  # Echo back the first key value
+    raise Exception('Something went wrong')
+
+
+Add permission to post event bridge by boto3 - 
+Goto Configuration - Permission - click on lambda Execution role - 
+give AmazonEventBridgeFullAccess 
+
+
+create a role which will have pemission to call stepfunction 
+attach that role with event bridge 
+
+another role for setpfunction which should have access to execute glue job 
+& glue & xray (not sure if needed) attach same role with eventbridge & stepfunction.

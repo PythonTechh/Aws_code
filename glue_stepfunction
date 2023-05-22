@@ -1,0 +1,19 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Glue StartJobRun",
+  "States": {
+    "Glue StartJobRun": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "test"
+      },
+      "End": true
+    }
+  }
+}
+
+
+--------------------------------
+
+https://docs.aws.amazon.com/step-functions/latest/dg/connect-glue.html

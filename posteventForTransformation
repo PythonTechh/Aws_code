@@ -1,0 +1,42 @@
+import json
+import boto3
+
+print('Loading function')
+
+
+def lambda_handler(event, context):
+    client = boto3.client('events')
+    response = client.put_rule(
+    Name='testbylambda1',
+    ScheduleExpression='rate(5 minutes)',
+    #EventPattern='string',
+    State='ENABLED',
+    Description='testbylambda',
+    RoleArn='arn:aws:iam::740486177493:role/event_role',
+    Tags=[
+        {
+            'Key': 'JobType',
+            'Value': 'P'
+        },
+    ],
+    EventBusName='default'
+)
+    print("After event", response)
+
+    response = client.put_targets(
+    Rule='testbylambda1',
+    Targets=[
+        {
+            'Id': '1',
+            'Arn':'arn:aws:states:us-east-1:740486177493:stateMachine:travel_sf',
+            'RoleArn': 'arn:aws:iam::740486177493:role/event_role'
+        }
+    ]
+)
+
+    print("Received event: " + json.dumps(event, indent=2))
+    print("value1 = " + event['key1'])
+    print("value2 = " + event['key2'])
+    print("value3 = " + event['key3'])
+    return event['key1']  # Echo back the first key value
+    raise Exception('Something went wrong')
