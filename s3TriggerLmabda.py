@@ -4,6 +4,7 @@ import urllib.parse
 import boto3
 import csv
 import io
+import time
 
 print('Loading function')
 
@@ -26,11 +27,19 @@ def lambda_handler(event, context):
         print(e)
         print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
         raise e
-
-    print("response", response)
+    source = key.split('/')[-2]    
+    obj = key.split('/')[-1].split('.')[0]
+    client = boto3.client('stepfunctions')
+    response_sf = client.start_execution(
+    stateMachineArn='arn:aws:states:us-east-1:211631851183:stateMachine:travelGlue',
+    name='travelGlue'+str(time.time()),
+    input="{\"source\": \"" + source + "\", \"object\": \""+ obj +"\"}"
+    #input ="{\"first_name\" : source}"
+)
+    #print("response", response)
     #Process it
     data = response['Body'].read().decode('utf-8')
-    print("Data *****", data)
+    #print("Data *****", data)
     reader = csv.reader(io.StringIO(data))
     #next(reader)
     #for row in reader:
