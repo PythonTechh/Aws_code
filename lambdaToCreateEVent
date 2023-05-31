@@ -1,42 +1,88 @@
 import json
 import boto3
+import time
+from datetime import datetime
 
 print('Loading function')
 
 
 def lambda_handler(event, context):
+    str_time=str(time.time())
     client = boto3.client('events')
-    response = client.put_rule(
-    Name='testbylambda1',
-    ScheduleExpression='rate(5 minutes)',
-    #EventPattern='string',
-    State='ENABLED',
-    Description='testbylambda',
-    RoleArn='arn:aws:iam::740486177493:role/event_role',
+    response = client.create_event_bus(
+    Name='traveleventbus'+ str_time,
     Tags=[
         {
-            'Key': 'JobType',
-            'Value': 'P'
+            'Key': 'sealid',
+            'Value': '110397'
+        },
+    ]
+)
+    
+    response = client.put_rule(
+    Name='Travel_Event_rule'+ str_time,
+    EventPattern='{"detail": {\
+    "source": ["orxe", "maui"],\
+    "object": ["orders", "transactions"]\
+  }}'
+,
+    State='ENABLED',
+    Description='Event_rule_by_code',
+    #,RoleArn='string',
+    Tags=[
+        {
+            'Key': 'sealid',
+            'Value': '110397'
         },
     ],
-    EventBusName='default'
-)
+    EventBusName='traveleventbus'+ str_time)
+# )
+    
+#     response = client.put_rule(
+#     Name='testbylambda1',
+#     ScheduleExpression='rate(5 minutes)',
+#     #EventPattern='string',
+#     State='ENABLED',
+#     Description='testbylambda',
+#     RoleArn='arn:aws:iam::740486177493:role/event_role',
+#     Tags=[
+#         {
+#             'Key': 'JobType',
+#             'Value': 'P'
+#         },
+#     ],
+#     EventBusName='default'
+# )
     print("After event", response)
 
     response = client.put_targets(
-    Rule='testbylambda1',
+    Rule='Travel_Event_rule' + str_time,
+    EventBusName='traveleventbus' + str_time,
     Targets=[
         {
             'Id': '1',
-            'Arn':'arn:aws:states:us-east-1:740486177493:stateMachine:travel_sf',
-            'RoleArn': 'arn:aws:iam::740486177493:role/event_role'
+            'Arn':'arn:aws:states:us-east-1:211631851183:stateMachine:processing-sf',
+            'RoleArn':'arn:aws:iam::211631851183:role/service-role/StepFunctions-processing-sf-role-63312113'
         }
     ]
 )
-
-    print("Received event: " + json.dumps(event, indent=2))
-    print("value1 = " + event['key1'])
-    print("value2 = " + event['key2'])
-    print("value3 = " + event['key3'])
-    return event['key1']  # Echo back the first key value
-    raise Exception('Something went wrong')
+    print("EventPattern******", event)
+    response = client.put_events(
+    Entries=[{
+            'Time': datetime(2015, 1, 1),
+            'Source': 'orxe',
+            'Resources': [],
+            'DetailType': "test_send_events",
+            'Detail': json.dumps(event),
+            'EventBusName': "arn:aws:events:us-east-1:211631851183:event-bus/traveleventbus"#+ str_time
+        },
+    ]
+)
+    return response
+#arn:aws:events:us-east-1:211631851183:event-bus/traveleventbus1683699424.9089646
+    # print("Received event: " + json.dumps(event, indent=2))
+    # print("value1 = " + event['key1'])
+    # print("value2 = " + event['key2'])
+    # print("value3 = " + event['key3'])
+    # return event['key1']  # Echo back the first key value
+    #raise Exception('Something went wrong')
